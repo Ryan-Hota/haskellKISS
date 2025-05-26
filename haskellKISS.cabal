@@ -88,7 +88,7 @@ executable haskellKISS
         , filepath
         , directory
         , process
-        , hlint
+        -- , hlint
 
     if os(windows)
         build-depends: Win32
