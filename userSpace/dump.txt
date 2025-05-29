@@ -1,0 +1,1 @@
+echo code ".\" --goto first.hs:0:0

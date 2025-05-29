@@ -1,20 +1,21 @@
 {-# OPTIONS_GHC -Wall #-}
 
 import System.FilePath( (</>), takeDrive, (<.>), takeDirectory, isDrive )
-import System.Directory (copyFile, getHomeDirectory, getCurrentDirectory, listDirectory, createDirectoryIfMissing, doesFileExist, removeFile, exeExtension)
+import System.Directory (copyFile, getHomeDirectory, getCurrentDirectory, listDirectory, createDirectoryIfMissing, doesFileExist, removeFile, exeExtension, removeDirectory, doesDirectoryExist, setCurrentDirectory)
 import System.Process (CreateProcess(..), createProcess, shell, StdStream (CreatePipe), waitForProcess)
 import System.IO(hGetContents', hGetContents)
-import Control.Monad (filterM, void)
+import Control.Monad (filterM, when, void, unless)
 import Data.Maybe (listToMaybe, fromMaybe)
 import System.Exit (ExitCode (..))
 import Prelude hiding (error)
 import qualified Prelude
+import Data.Functor ((<&>))
 
 error :: String -> any
 error = Prelude.error . ("\ESC[91m"++) . (++"\ESC[0m")
 
-warning :: String -> IO Bool
-warning = (True <$) . putStrLn . ("\ESC[33m"++) . (++"\ESC[0m")
+-- warning :: String -> IO Bool
+-- warning = (True <$) . putStrLn . ("\ESC[33m"++) . (++"\ESC[0m")
 
 run :: String -> IO Bool
 run str = do
@@ -26,23 +27,14 @@ run str = do
         ExitFailure _ -> False
 
 installVscodeExtension :: String -> IO Bool
-installVscodeExtension extId = do
-
-    vscodeAccessible <- run "code --help"
-    if vscodeAccessible
-        then run ("code --install-extension "++extId)
-        else vscodeWarning
-
+installVscodeExtension extId = run ("code --install-extension "++extId)
 
 compileHaskellKISSAt :: FilePath -> IO ()
 compileHaskellKISSAt exeDir = do
 
-    currentDir <- getCurrentDirectory
+    root <- takeDirectory <$> getCurrentDirectory
 
-    maybeCorrectDir <- fmap listToMaybe . filterM (doesFileExist.(</>"hie.yaml")) . takeWhile (not.isDrive) . iterate takeDirectory $ currentDir
-    let correctDir = fromMaybe (error ("Could not find project root (a folder containing \"hie.yaml\") among the ancestor folders of the current working folder "++show currentDir)) maybeCorrectDir
-
-    let localExeDir = correctDir</>"executable"
+    let localExeDir = root</>"executable"
     listDirectory localExeDir >>= mapM_ (copyFile<$>(localExeDir</>)<*>(exeDir</>))
 
     compilationSucceeded <- run ( "ghc -i"++exeDir++" -O2 "++show (exeDir</>"haskellKISS.hs") )
@@ -50,15 +42,17 @@ compileHaskellKISSAt exeDir = do
         then mapM_ (removeFile.(exeDir</>)) . filter (/=("haskellKISS"<.>exeExtension)) =<< listDirectory exeDir
         else error "ghc compilation of haskellKISS failed"
 
+    writeFile (".."</>"hie"<.>"yaml") ("cradle: {\n  bios: {\n    program: "++(exeDir</>"haskellKISS"{-<.>exeExtension-})++"\n    }\n  }")
+
 data To = To
 
 copy :: FilePath -> To -> FilePath -> IO ()
 copy cabalExecutable To exeDir = do
 
     cabalAccessible <-  run "cabal --help"
-    if cabalAccessible then pure () else error "cabal cannot be accessed here"
+    unless cabalAccessible $ error "cabal cannot be accessed here"
 
-    _ <- run ("cabal install "++cabalExecutable)
+    void $ run ("cabal install "++cabalExecutable)
 
     (_,Just hout,_,_) <- createProcess ((shell "cabal path"){std_out=CreatePipe})
     out <- hGetContents' hout
@@ -72,11 +66,12 @@ copy cabalExecutable To exeDir = do
 main :: IO ()
 main = do
 
-    primaryDrive <- takeDrive <$> getHomeDirectory
+    maybeUserSpace <- fmap listToMaybe . filterM (doesFileExist.(</>"hie.yaml").takeDirectory) . takeWhile (not.isDrive) . iterate takeDirectory =<< getCurrentDirectory
+    let userSpace = ( `fromMaybe` maybeUserSpace ) (error "Could not find user folder (sibling of \"hie.yaml\") among the ancestor folders of the current working folder" )
+    setCurrentDirectory userSpace
 
-    let exeDir = primaryDrive</>"haskellKISSExecutables"
+    exeDir <- getHomeDirectory <&> (</>"haskellKISSExecutables") . takeDrive
     createDirectoryIfMissing True exeDir
-    -- writeFile ".."</>"hie,yaml"
 
     -- _ <- if os=="mingw32" 
         -- then run "powershell -ExecutionPolicy Bypass -File addToPath.ps1"
@@ -84,36 +79,36 @@ main = do
 
     vscodeAccessible <- run "code --help"
     if vscodeAccessible
-        then do 
-            _ <- installVscodeExtension "mogeko.haskell-extension-pack"
-            _ <- installVscodeExtension "formulahendry.code-runner"
-            listDirectory (".."</>".vscode") >>= mapM_ (copyFile<$>((".."</>".vscode")</>)<*>(".vsocde"</>))
-        else void $ warning "Could not access VS Code, therfore skipping VS Code stuff"
-            
+        then do
+            void $ installVscodeExtension "mogeko.haskell-extension-pack"
+            void $ installVscodeExtension "formulahendry.code-runner"
+        else doesDirectoryExist ".vscode" >>= ( `when` removeDirectory ".vscode" )
 
-    alreadyCompiled <- doesFileExist (exeDir</>"haskellKISS"<.>exeExtension)
-    if alreadyCompiled
-        then pure ()
-        else compileHaskellKISSAt exeDir
+    compileHaskellKISSAt exeDir
+
+    -- root <- takeDirectory <$> getCurrentDirectory
+
+    -- let localExeDir = root</>"executable"
+    -- listDirectory localExeDir >>= mapM_ (copyFile<$>(localExeDir</>)<*>(exeDir</>))
+
+    -- compilationSucceeded <- run ( "ghc -i"++exeDir++" -O2 "++show (exeDir</>"haskellKISS.hs") )
+    -- if compilationSucceeded
+    --     then mapM_ (removeFile.(exeDir</>)) . filter (/=("haskellKISS"<.>exeExtension)) =<< listDirectory exeDir
+    --     else error "ghc compilation of haskellKISS failed"
+
+    writeFile (".."</>"hie"<.>"yaml") ("cradle: {\n  bios: {\n    program: "++(exeDir</>"haskellKISS"{-<.>exeExtension-})++"\n    }\n  }")
 
     hlintAlreadyMoved <- doesFileExist (exeDir</>"hlint"<.>exeExtension)
-    if hlintAlreadyMoved
-        then pure ()
-        else copy "hlint" To exeDir
+    unless hlintAlreadyMoved $ copy "hlint" To exeDir
 
     unlitAlreadyMoved <- doesFileExist (exeDir</>"markdown-unlit"<.>exeExtension)
-    if unlitAlreadyMoved
-        then pure ()
-        else copy "markdown-unlit" To exeDir
+    unless unlitAlreadyMoved  $ copy "markdown-unlit" To exeDir
 
-    putStrLn "\ESC[32mhaskellKISS installation complete!\ESC[0m"
+    putStrLn "\ESC[32m\n\nhaskellKISS installation complete!\n\n\ESC[0m"
 
-    _ <- if vscodeAccessible
-        then do
-            firstExists <- doesFileExist "first.hs"
-            if firstExists
-                then run ("code \"."</>"\" -n -g first.hs:0:0")
-                else warning "did not find file \"first.hs\", so not opening VS Code"
-        else vscodeWarning
-
-    pure ()
+    firstExists <- doesFileExist "first.hs"
+    let runWithoutWaiting = putStrLn in case ( vscodeAccessible , firstExists ) of
+        (True,True) -> run ("code \"."</>"\"") >> runWithoutWaiting "code --goto first.hs:0:0"
+        (False,True) -> runWithoutWaiting ("code \"."</>"\"")
+        (True,False) -> runWithoutWaiting "ghci \"first.hs\""
+        (False,False) -> runWithoutWaiting "ghci"
