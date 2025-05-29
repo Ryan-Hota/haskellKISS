@@ -1,3 +1,0 @@
-import System.Environment as SystemEnvironmentForHaskellKISS
-SystemEnvironmentForHaskellKISS.setEnv \"HASKELLKISS_GHCI_SCRIPT\" \"D:\\haskellKISS\\txt.txt\"
-import qualified Control.Applicative as ControlApplicativeForHaskellKISS

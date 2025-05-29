@@ -1,0 +1,15 @@
+{
+    // haskell extension pack
+    "haskell.manageHLS": "GHCup",
+
+    // code runner
+    "code-runner.saveFileBeforeRun":true,
+    "code-runner.runInTerminal": true,
+    "code-runner.fileDirectoryAsCwd":true,
+    "code-runner.executorMap": {"haskell":"haskellKISS \"$fileName\" loadGHCiInShell\n:!haskellKISS \"$fileName\" loadGHCiInGHCi\n::cmd (do{script<-SystemEnvironmentForHaskellKISS.getEnv \"HASKELLKISS_GHCI_SCRIPT\" ; ControlApplicativeForHaskellKISS.pure (\"::script \" ControlApplicativeForHaskellKISS.<|> script)})"},  
+    "code-runner.customCommand": "cls\nrunghc \"$fileName\"",
+    "code-runner.enableAppInsights": false,
+
+    // vscode
+    "editor.acceptSuggestionOnEnter": "off"
+}

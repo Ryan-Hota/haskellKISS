@@ -1,3 +1,3 @@
-f = undefined
-g = undefined
-h = f . g
+import Module()
+main :: IO ()
+main = pure ()

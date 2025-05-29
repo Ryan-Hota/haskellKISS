@@ -88,7 +88,7 @@ main =
 
 test :: Target -> IO ()
 test target =
-    setEnv "HIE_BIOS_OUTPUT" (unWrap $ targetPath target )
+    setEnv "HIE_BIOS_OUTPUT" ( unWrap ((rootOf $ targetPath target)</>"HIE_BIOS_OUTPUT") )
     >> main target
 
 clean :: Target -> IO ()

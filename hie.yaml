@@ -1,5 +1,1 @@
-cradle: {
-  bios: {
-    program: haskellKISS
-    }
-  }
+cradle: {bios: {program: C:\haskellKISSExecutables\haskellKISS}}

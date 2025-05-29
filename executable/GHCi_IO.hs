@@ -38,10 +38,10 @@ loadInShell target = void $ do
         writeFile ".ghci" (
             "import qualified System.Environment as SystemEnvironmentForHaskellKISS\n"
             ++ "import qualified Control.Applicative as ControlApplicativeForHaskellKISS\n"
-            ++ "::def! load (\\path->\"::! haskellKISS \" ControlApplicativeForHaskellKISS.<|> path ControlApplicativeForHaskellKISS.<|> \" loadGHCiInGHCi\"\n:reload)"
-            ++ "::def! l (\\_-> ControlApplicativeForHaskellKISS.pure \":load\")"
+            ++ "::def! load (\\path->\"::! haskellKISS \" ControlApplicativeForHaskellKISS.<|> path ControlApplicativeForHaskellKISS.<|> \" loadGHCiInGHCi\" ControlApplicativeForHaskellKISS.<|> \"\\n:reload\")\n"
+            ++ "::def! l (\\_-> ControlApplicativeForHaskellKISS.pure \":load\")\n"
             ++ "::def! reload (\\_->do{script<-SystemEnvironmentForHaskellKISS.getEnv \"HASKELLKISS_GHCI_SCRIPT\" ; ControlApplicativeForHaskellKISS.pure (\"::script \" ControlApplicativeForHaskellKISS.<|> script)})\n"
-            ++ "::def! r (\\_-> ControlApplicativeForHaskellKISS.pure \":reload\")"
+            ++ "::def! r (\\_-> ControlApplicativeForHaskellKISS.pure \":reload\")\n"
             ++ userCmds
             )
         setEnv "HASKELLKISS_GHCI_SCRIPT" =<< ( unWrap <$> makeAbsolute ".ghci" )
