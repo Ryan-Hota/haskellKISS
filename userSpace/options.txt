@@ -1,1 +1,4 @@
 -Wall
+:set prompt ">>> "
+:set -pgmL markdown-unlit
+:def! t (\x->pure ("::t +d"++x))

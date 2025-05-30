@@ -73,10 +73,6 @@ main = do
     exeDir <- getHomeDirectory <&> (</>"haskellKISSExecutables") . takeDrive
     createDirectoryIfMissing True exeDir
 
-    -- _ <- if os=="mingw32" 
-        -- then run "powershell -ExecutionPolicy Bypass -File addToPath.ps1"
-        -- else run "echo \"remember to add "++show (show exeDir)++" to PATH\""
-
     vscodeAccessible <- run "code --help"
     if vscodeAccessible
         then do
@@ -86,18 +82,12 @@ main = do
 
     compileHaskellKISSAt exeDir
 
-    -- root <- takeDirectory <$> getCurrentDirectory
-
-    -- let localExeDir = root</>"executable"
-    -- listDirectory localExeDir >>= mapM_ (copyFile<$>(localExeDir</>)<*>(exeDir</>))
-
-    -- compilationSucceeded <- run ( "ghc -i"++exeDir++" -O2 "++show (exeDir</>"haskellKISS.hs") )
-    -- if compilationSucceeded
-    --     then mapM_ (removeFile.(exeDir</>)) . filter (/=("haskellKISS"<.>exeExtension)) =<< listDirectory exeDir
-    --     else error "ghc compilation of haskellKISS failed"
-
     writeFile (".."</>"hie"<.>"yaml") ("cradle: {\n  bios: {\n    program: "++(exeDir</>"haskellKISS"{-<.>exeExtension-})++"\n    }\n  }")
 
+    -- _ <- if os=="mingw32" 
+        -- then run "powershell -ExecutionPolicy Bypass -File addToPath.ps1"
+        -- else run "echo \"remember to add "++show (show exeDir)++" to PATH\""
+    
     hlintAlreadyMoved <- doesFileExist (exeDir</>"hlint"<.>exeExtension)
     unless hlintAlreadyMoved $ copy "hlint" To exeDir
 
@@ -107,7 +97,7 @@ main = do
     putStrLn "\ESC[32m\n\nhaskellKISS installation complete!\n\n\ESC[0m"
 
     firstExists <- doesFileExist "first.hs"
-    let runWithoutWaiting = putStrLn in case ( vscodeAccessible , firstExists ) of
+    let runWithoutWaiting = void.createProcess.shell in case ( vscodeAccessible , firstExists ) of
         (True,True) -> run ("code \"."</>"\"") >> runWithoutWaiting "code --goto first.hs:0:0"
         (False,True) -> runWithoutWaiting ("code \"."</>"\"")
         (True,False) -> runWithoutWaiting "ghci \"first.hs\""

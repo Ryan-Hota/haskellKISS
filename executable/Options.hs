@@ -9,13 +9,13 @@ import Directory (FileTree(..), isFile, isDirectory)
 
 -- | characters to ignore if found in the /options.txt/ file
 charsToIgnore :: String
-charsToIgnore = "[]{}(),;:"
+charsToIgnore = ""--"[]{}(),;:"
 
 -- | format a text string containing all options into a list of options
 format :: String -> [String]
 format =
     map ( \ c -> if c `elem` charsToIgnore then ' ' else c )
-    |> words
+    |> lines --words
 
 -- | list of options
 options :: FileTree RootRelativeFilePath -> [String]
