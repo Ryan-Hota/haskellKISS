@@ -1,0 +1,25 @@
+0. good internet connection
+
+1. install GHCup by following the instructions here - https://www.haskell.org/ghcup/install/
+    (for HLS, say 'Y' for yes, for all others accept defaults)
+
+2. you have already installed vscode
+
+3. With the current folder as the working folder, run the command
+    <    runghc "../init/init.hs"    >
+   over and over until successful.
+   Please save the output each time so that I can take a look at them. (if they are a bit long they might get cut off, no worries)
+   If the same final error persists, please contact me.
+
+4. add the 'haskellKISSExecutables' folder to PATH
+    (It should be at the top of your main drive)
+
+4. A window should pop open once you're done. Right click and Run Code.
+    Always stay inside the userSpace folder, do not use the haskellKISS folder.
+    If you want to open vscode in some folder deeper in userSpace, then you might want to add the configs in the .vscode folder to the global settings. (Contact if in doubt)
+
+5. To navigate the vscode autocomplete suggestions menu, you have to use th up,down and enter keys while having ctrl pressed down.
+
+6. If there are red or yellow squiggly underlines, put your cursor there and press < 'ctrl' + '.' > to open the quick fix menu
+
+7. Have fun coding! (book is at globallyEnabledModules/book/read/main.pdf)
